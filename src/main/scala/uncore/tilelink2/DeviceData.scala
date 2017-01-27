@@ -180,16 +180,17 @@ object DeviceDataUtils {
 
   private def getCoreDeviceData(clint: CoreplexLocalInterrupter, tlplic: TLPLIC)(implicit p: Parameters): DeviceDataItems = {
     val c = CoreplexParameters()(p)
-    val isa = {
-      val m = if (p(MulDivKey).nonEmpty) "m" else ""
-      val a = if (p(UseAtomics)) "a" else ""
-      val f = if (p(FPUKey).nonEmpty) "f" else ""
-      val d = if (p(FPUKey).nonEmpty && p(XLen) > 32) "d" else ""
-      val s = if (c.hasSupervisor) "s" else ""
-      s"rv${p(XLen)}i$m$a$f$d$s"
-    }
 
-    DeviceDataItems("core" -> (0 until c.nTiles).map { i =>
+    DeviceDataItems("core" -> c.tilesParams.zipWithIndex.map { case (t, i) =>
+      val isa = {
+        val m = if (t.core.mulDiv.nonEmpty) "m" else ""
+        val a = if (t.core.useAtomics) "a" else ""
+        val f = if (t.core.fpu.nonEmpty) "f" else ""
+        val d = if (t.core.fpu.nonEmpty && p(XLen) > 32) "d" else ""
+        val c = if (t.core.useCompressed) "c" else ""
+        val s = if (t.core.useVM) "s" else ""
+        s"rv${p(XLen)}i$m$a$f$d$c$s"
+      }
       DeviceDataItems(
         i.toString -> DeviceDataItems(
           "0" -> (
